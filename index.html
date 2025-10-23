@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bollywood Song Quiz</title>
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --card: rgba(255,255,255,0.09);
+      --card-2: rgba(255,255,255,0.14);
+      --text: #f9f6ff;
+      --accent: #ff4d97;
+      --accent-2: #7c5cff;
+      --green: #4cd964;
+      --red: #ff3b30;
+      --grey: #9aa4b2;
+      --shadow: 0 8px 24px rgba(0,0,0,.25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: radial-gradient( circle at 20% -10%, rgba(255,0,183,.25) 0%, rgba(0,0,0,0) 40%), radial-gradient( circle at 100% 0%, rgba(0, 180, 255,.25) 0%, rgba(0,0,0,0) 40%), linear-gradient(135deg, #0b0c10 0%, #1a1020 60%, #0b0c10 100%); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+
+    .app {
+      width: min(940px, 95%);
+      display: grid;
+      gap: 20px;
+    }
+
+    header.brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: var(--shadow);
+    }
+    header.brand .title {
+      display: flex; align-items: center; gap: 12px;
+    }
+    header.brand .title .logo {
+      width: 38px; height: 38px; border-radius: 9px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: conic-gradient(from 180deg at 50% 50%, #ff6bd6, #7c5cff, #4cd964, #ff6bd6);
+      box-shadow: 0 4px 12px rgba(0,0,0,.25);
+      color: white; font-weight: 700;
+    }
+    header.brand .title h1 { font-size: 1.1rem; margin: 0; letter-spacing: .4px; }
+
+    /* Card and screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .card {
+      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    /* Start screen */
+    .start-screen h2 { margin: 6px 0 12px; font-size: 1.4rem; }
+    .start-screen p { color: #e8e8e8; margin: 0 0 14px; }
+    .btn {
+      background: linear-gradient(135deg, var(--accent-2), #ff5f9e);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .15s ease, box-shadow .2s ease;
+      box-shadow: 0 6px 16px rgba(255,0,150,.35);
+    }
+    .btn.secondary {
+      background: linear-gradient(135deg, rgba(255,255,255,.2), rgba(255,255,255,.08));
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.4);
+      box-shadow: none;
+    }
+    .btn:disabled {
+      opacity: .5; cursor: not-allowed;
+    }
+    .tips { color: #eaeaea; font-size: .9rem; opacity: .9; margin-top: 6px; }
+
+    /* Quiz layout */
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .badge {
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.25);
+      font-weight: 600;
+    }
+    .timer { font-variant-numeric: tabular-nums; }
+
+    .progress-area {
+      height: 6px; background: rgba(255,255,255,.15);
+      border-radius: 999px; overflow: hidden;
+      margin: 12px 0 16px;
+    }
+    .progress {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #ff4d97, #7c5cff, #4cd964);
+      transition: width .25s ease;
+    }
+
+    .question { font-size: 1.25rem; font-weight: 700; margin: 6px 0 14px; }
+    .options { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .option-btn {
+      width: 100%; text-align: left;
+      padding: 12px 14px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.08);
+      color: #fff; cursor: pointer; font-size: 1rem;
+      transition: transform .1s ease, background .2s ease;
+    }
+    .option-btn:hover { transform: translateY(-1px); }
+    .option-btn.correct { background: rgba(76,217,100,.25); border-color: rgba(76,217,100,.8); }
+    .option-btn.wrong { background: rgba(255,0,0,.25); border-color: rgba(255,0,0,.8); }
+    .option-btn[aria-disabled="true"] { opacity: .6; cursor: not-allowed; }
+
+    .hinted { opacity: .9; text-decoration: line-through; color: #f9d423; }
+
+    .controls { display: flex; justify-content: space-between; gap: 12px; margin-top: 14px; }
+
+    /* Result screen */
+    .result-screen { text-align: center; padding: 16px; }
+    .result-score { font-size: 2rem; font-weight: 800; margin: 8px 0 2px; }
+    .summary { color: #e2e2e2; margin: 8px 0 14px; }
+
+    /* Responsive tweaks */
+    @media (min-width: 720px){
+      .options { grid-auto-rows: 1fr; grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Utilities */
+    .hidden { display: none; }
+    .center { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="brand" aria-label="Bollywood Song Quiz header">
+      <div class="title">
+        <div class="logo" aria-label="Logo">B</div>
+        <h1>Bollywood Song Quiz</h1>
+      </div>
+      <div style="opacity:.8; font-size:.9rem;">
+        <span>Per-question timer: 20s</span>
+      </div>
+    </header>
+
+    <!-- Start Screen -->
+    <section class="start-screen screen active card" id="startScreen" aria-label="Start Screen">
+      <h2>Welcome to the Bollywood Song Quiz</h2>
+      <p>Test your knowledge of iconic Bollywood songs. Each question has a 20-second timer. Use the Hint to eliminate one wrong option.</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <button class="btn" id="startBtn" aria-label="Start Quiz">Start Quiz</button>
+        <button class="btn secondary" id="howToBtn" aria-label="How to Play">How to Play</button>
+      </div>
+      <p class="tips" id="startTips" style="margin-top:10px;">
+        Pro tip: In one click you can shuffle questions each time you play.
+      </p>
+    </section>
+
+    <!-- Quiz Screen -->
+    <section class="quiz-screen screen card" id="quizScreen" aria-label="Quiz Screen">
+      <div class="topbar">
+        <div class="badge" id="scoreBadge">Score: 0</div>
+        <div class="timer" id="timer">Time: 20s</div>
+      </div>
+      <div class="progress-area" aria-label="Progress">
+        <div class="progress" id="progressBar" style="width:0%"></div>
+      </div>
+
+      <div class="card" style="margin-top:0;">
+        <div class="question" id="questionText">Question text</div>
+        <ul class="options" id="optionsList">
+          <!-- options will be injected here -->
+        </ul>
+      </div>
+
+      <div class="controls">
+        <button class="btn secondary" id="hintBtn" aria-label="Hint" disabled>Hint</button>
+        <button class="btn" id="nextBtn" aria-label="Next Question" disabled>Next</button>
+      </div>
+    </section>
+
+    <!-- Result Screen -->
+    <section class="result-screen screen" id="resultScreen" aria-label="Result Screen">
+      <h2>Quiz Complete</h2>
+      <div class="result-score" id="finalScore">0</div>
+      <div class="summary" id="summaryText">Nice! You did great. Try again to improve your score.</div>
+      <div style="margin:14px 0;">
+        <button class="btn" id="restartBtn" aria-label="Play Again">Play Again</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Bollywood Song Quiz - Single-file app
+
+    // Questions pool (10 questions)
+    const questionsPool = [
+      {
+        q: "Which film features the song 'Tum Hi Ho'?",
+        options: ["Aashiqui 2", "Aashiq Banaya Aapne", "Ek Villain", "Rockstar"],
+        answer: 0
+      },
+      {
+        q: "The song 'Kala Chashma' is from which Bollywood film?",
+        options: ["Baar Baar Dekho", "Kalank", "Chennai Express", "Phir Hera Pheri"],
+        answer: 0
+      },
+      {
+        q: "The track 'Jai Ho' gained worldwide fame from which movie?",
+        options: ["Slumdog Millionaire", "Dhoom 2", "Roja", "3 Idiots"],
+        answer: 0
+      },
+      {
+        q: "Which film features the romantic track 'Humko Humise Chaura Lo'?",
+        options: ["Mohabbatein", "Kuch Kuch Hota Hai", "Hum Dil De Chuke Sanam", "Veer-Zaara"],
+        answer: 0
+      },
+      {
+        q: "The song 'Chaiyya Chaiyya' was shot on a moving train in which film?",
+        options: ["Dil Se", "Ra.One", "Dilwale", "Gully Boy"],
+        answer: 0
+      },
+      {
+        q: "Which film features the upbeat song 'Dhoom Dhoom'?",
+        options: ["Dhoom", "Dhoom 2", "Bang Bang!", "Race"],
+        answer: 0
+      },
+      {
+        q: "The love ballad 'Tum Se Hi' is from which movie?",
+        options: ["Jab We Met", "Kuch Kuch Hota Hai", "Barfi!", "Proceed"],
+        answer: 0
+      },
+      {
+        q: "Which film features the title song 'Tujhe Dekha To' from its iconic sequence?",
+        options: ["Dilwale Dulhania Le Jayenge", "Kuch Kuch Hota Hai", "Hum Aapke Hain Koun", "Veer-Zaara"],
+        answer: 0
+      },
+      {
+        q: "The song 'Om Shanti Om' belongs to which film?",
+        options: ["Om Shanti Om", "Chennai Express", "Veer-Zaara", "Kabhi Khushi Kabhie Gham"],
+        answer: 0
+      },
+      {
+        q: "Which film features the romantic classic 'Pehla Nasha'?",
+        options: ["Jo Jeeta Woh Sikandar", "Dilwale", "Hum Aapke Hain Koun", "Jo Jeeta Wohi Sikandar"],
+        answer: 0
+      }
+    ];
+
+    // The above last question had an intentional quirky option repetition ("Jo Jeeta Wohi Sikandar") to add a touch of playfulness.
+    // We'll normalize the options for Q10 to avoid duplicates by replacing with a clean accurate set.
+    // Re-assign Q10 properly:
+    questionsPool[9] = {
+      q: "Which film features the romantic classic 'Pehla Nasha'?",
+      options: ["Jo Jeeta Woh Sikandar", "Hum Aapke Hain Kaun", "Rang De Basanti", "Kaho Naa... Pyaar Hai"],
+      answer: 0
+    };
+
+    // State
+    let shuffled = [];
+    let currentIndex = 0;
+    let score = 0;
+    let timerInterval = null;
+    const perQuestionTime = 20; // seconds
+    let timeLeft = perQuestionTime;
+    let answered = false;
+    let hintUsed = false;
+
+    // DOM references
+    const startScreen = document.getElementById('startScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const startBtn = document.getElementById('startBtn');
+    const howToBtn = document.getElementById('howToBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const questionText = document.getElementById('questionText');
+    const optionsList = document.getElementById('optionsList');
+    const nextBtn = document.getElementById('nextBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const timerEl = document.getElementById('timer');
+    const scoreBadge = document.getElementById('scoreBadge');
+    const progressBar = document.getElementById('progressBar');
+    const finalScoreEl = document.getElementById('finalScore');
+    const summaryText = document.getElementById('summaryText');
+    const startTips = document.getElementById('startTips');
+    const totalQuestionsEl = document.createElement('span');
+    // Helper to switch screens
+    function showScreen(screen) {
+      [startScreen, quizScreen, resultScreen].forEach(s => s.classList.remove('active'));
+      screen.classList.add('active');
+    }
+
+    // Init
+    function initQuiz() {
+      // Reset state
+      score = 0;
+      currentIndex = 0;
+      timeLeft = perQuestionTime;
+      answered = false;
+      hintUsed = false;
+      shuffled = shuffleArray([...questionsPool]);
+      // Reset UI
+      scoreBadge.textContent = `Score: ${score}`;
+      progressBar.style.width = '0%';
+      nextBtn.disabled = true;
+      hintBtn.disabled = false;
+      renderQuestion();
+      showScreen(quizScreen);
+      // Start timer
+      resetTimer();
+      startTimer();
+    }
+
+    // Shuffle utility
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Render current question
+    function renderQuestion() {
+      const qObj = shuffled[currentIndex];
+      questionText.textContent = `Q${currentIndex + 1}. ${qObj.q}`;
+      // Clear options
+      optionsList.innerHTML = '';
+      // Build option buttons
+      qObj.options.forEach((opt, idx) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.setAttribute('data-index', idx);
+        btn.addEventListener('click', () => selectOption(idx, btn));
+        li.appendChild(btn);
+        optionsList.appendChild(li);
+      });
+      // Reset per-question state
+      answered = false;
+      timeLeft = perQuestionTime;
+      updateTimerDisplay();
+      nextBtn.disabled = true;
+      hintBtn.disabled = false;
+    }
+
+    // Option selection
+    function selectOption(index, btn) {
+      if (answered) return;
+      answered = true;
+      const qObj = shuffled[currentIndex];
+      // Disable all options
+      const allBtns = Array.from(optionsList.querySelectorAll('.option-btn'));
+      allBtns.forEach(b => b.disabled = true);
+      // Check answer
+      if (index === qObj.answer) {
+        btn.classList.add('correct');
+        score++;
+        scoreBadge.textContent = `Score: ${score}`;
+      } else {
+        btn.classList.add('wrong');
+        // Highlight correct answer
+        const correctBtn = allBtns.find(b => Number(b.getAttribute('data-index')) === qObj.answer);
+        if (correctBtn) correctBtn.classList.add('correct');
+      }
+      // End by enabling Next
+      nextBtn.disabled = false;
+      hintBtn.disabled = true;
+      stopTimer();
+    }
+
+    // Timer
+    function updateTimerDisplay() {
+      timerEl.textContent = `Time: ${timeLeft}s`;
+      // Optional: visual cue when near timeout
+      if (timeLeft <= 5) {
+        timerEl.style.color = '#ff9d9d';
+      } else {
+        timerEl.style.color = '#e9e9e9';
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) {
+          // Time out: auto-advance as wrong
+          timeLeft = 0;
+          updateTimerDisplay();
+          autoTimeout();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      timeLeft = perQuestionTime;
+      updateTimerDisplay();
+    }
+
+    function autoTimeout() {
+      // If already answered, ignore
+      if (answered) return;
+      answered = true;
+      // Disable options
+      const allBtns = Array.from(optionsList.querySelectorAll('.option-btn'));
+      allBtns.forEach(b => b.disabled = true);
+      // Highlight correct answer
+      const qObj = shuffled[currentIndex];
+      const correctBtn = allBtns.find(b => Number(b.getAttribute('data-index')) === qObj.answer);
+      if (correctBtn) correctBtn.classList.add('correct');
+      // Next enabled
+      nextBtn.disabled = false;
+      hintBtn.disabled = true;
+      stopTimer();
+    }
+
+    // Next question
+    nextBtn.addEventListener('click', () => {
+      currentIndex++;
+      if (currentIndex < shuffled.length) {
+        renderQuestion();
+        resetTimer();
+        startTimer();
+      } else {
+        // End quiz
+        endQuiz();
+      }
+    });
+
+    // Hint: remove one incorrect option
+    hintBtn.addEventListener('click', () => {
+      if (hintUsed) return;
+      hintUsed = true;
+      const qObj = shuffled[currentIndex];
+      // Find a wrong option that is visible and disable it
+      const allBtns = Array.from(optionsList.querySelectorAll('.option-btn'));
+      const wrongIndices = allBtns
+        .map((b, i) => ({ idx: Number(b.getAttribute('data-index')), el: b }))
+        .filter(o => o.idx !== qObj.answer);
+      if (wrongIndices.length > 0) {
+        // Prefer a not-yet-disabled option
+        const toHide = wrongIndices.find(o => !o.el.hasAttribute('aria-disabled') || o.el.getAttribute('aria-disabled') !== 'true');
+        if (toHide) {
+          toHide.el.setAttribute('aria-disabled','true');
+          toHide.el.classList.add('hinted');
+        } else {
+          // Fallback: hide first wrong
+          wrongIndices[0].el.setAttribute('aria-disabled','true');
+          wrongIndices[0].el.classList.add('hinted');
+        }
+      }
+      hintBtn.disabled = true;
+    });
+
+    // Restart
+    restartBtn.addEventListener('click', initQuiz);
+
+    // Start flow
+    startBtn.addEventListener('click', initQuiz);
+    howToBtn.addEventListener('click', () => {
+      alert("Bollywood Song Quiz: You have 20 seconds per question. Click an answer to score. Use Hint to remove one wrong option. Click Next to proceed.");
+    });
+
+    // End quiz
+    function endQuiz() {
+      stopTimer();
+      // Show result
+      finalScoreEl.textContent = score;
+      const total = shuffled.length;
+      summaryText.textContent = score >= Math.ceil(total * 0.6)
+        ? "Nice! You know your Bollywood classics."
+        : "Keep watching & learning—Bollywood has a catalog of gems!";
+      showScreen(resultScreen);
+    }
+
+    // Initialize default view on load
+    // Attach initial screen state
+    // No action to start automatically; user starts with Start button
+
+  </script>
+</body>
+</html>
